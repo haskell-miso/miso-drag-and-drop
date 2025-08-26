@@ -21,7 +21,7 @@ import           Data.Map.Strict (Map)
 -----------------------------------------------------------------------------
 data Action
   = DragStart Section Task
-  | DragEnd Section Task
+  | DragEnd
   | Drop Section
   | DragOver
   | DragEnter
@@ -86,7 +86,7 @@ app = (component initialModel update_ viewModel)
         DragStart section task -> do
           currentTask ?= task
           currentSection ?= section
-        DragEnd _ _ -> do
+        DragEnd -> do
           currentTask .= Nothing
           currentSection .= Nothing
         Drop droppedSection -> do
@@ -161,7 +161,7 @@ showSection (maybeSection, maybeTask) (section, tasks) =
           , "dragging" =: (Just task == maybeTask)
           ]
         , E.onDragStart (DragStart section task)
-        , E.onDragEnd (DragEnd section task)
+        , E.onDragEnd DragEnd
         ]
         [ H.div_ [P.class_ "task-title"] [ text taskTitle ]
         , H.div_
