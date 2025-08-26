@@ -23,7 +23,7 @@ data Action
   = DragStart Section Task
   | DragEnd Section Task
   | DragOver
-  | DragEnter Section
+  | DragEnter
   | DragLeave
   | Drop Section
   deriving (Show, Eq)
@@ -84,42 +84,40 @@ app = (component initialModel update_ viewModel)
         DragStart section task -> do
           currentTask ?= task
           currentSection ?= section
-          io_ (consoleLog "drag start")
         DragEnd _ _ -> do
           currentTask .= Nothing
           currentSection .= Nothing
-          io_ (consoleLog "drag end")
-        DragOver -> do
-          io_ (consoleLog "drag over")
-        DragEnter section -> do
-          currentSection ?= section
-          io_ (consoleLog "drag enter")
-        DragLeave -> do
-          currentSection .= Nothing
-          io_ (consoleLog "drag leave")
         Drop droppedSection -> do
-          io_ (consoleLog "in drop!")
           use currentSection >>= \case
             Just section
               | section /= droppedSection -> do
-                  io_ (consoleLog "in section!")
                   use currentTask >>= \case
-                    Nothing -> do
-                      io_ (consoleLog "no current task!")
+                    Nothing ->
                       pure ()
-                    Just task -> do
-                      io_ (consoleLog "found current task, swapping!")
+                    Just task ->
                       sections %= swap task section droppedSection 
             _ ->
               pure ()
-              
           currentSection .= Nothing
-          io_ (consoleLog "drop")
+          currentTask .= Nothing
+        DragOver ->
+          pure ()
+        DragEnter ->
+          pure ()
+        DragLeave ->
+          pure ()
 -----------------------------------------------------------------------------
 swap :: Task -> Section -> Section -> Map Section [Task] -> Map Section [Task] 
-swap droppedTask oldSection newSection sections_ = do
-  case M.filterWithKey (\s ts -> notElem (taskId droppedTask) (taskId <$> ts) && oldSection == s) sections_ of
-    new -> M.insertWith (++) newSection [droppedTask] new
+swap droppedTask oldSection newSection sections_ =
+  case M.insertWith (++) newSection [droppedTask] sections_ of
+    newMap ->
+      case M.lookup oldSection newMap of
+        Nothing -> newMap
+        Just oldTasks ->
+          let
+            updatedTasks = Prelude.filter (\t -> taskId t /= taskId droppedTask) oldTasks
+          in
+            M.insert oldSection updatedTasks newMap
 -----------------------------------------------------------------------------
 data Section
   = Todo
@@ -149,7 +147,7 @@ showSection (maybeSection, maybeTask) (section, tasks) =
       , "drag-enter" =: (Just section == maybeSection)
       ] 
     , Main.onDragOver DragOver
-    , Main.onDragEnter (DragEnter section)
+    , Main.onDragEnter DragEnter
     , Main.onDragLeave DragLeave
     , Main.onDrop (Drop section)
     ]
@@ -220,65 +218,3 @@ viewModel model =
 draggable_ :: Bool -> Attribute action
 draggable_ = boolProp "draggable"
 -----------------------------------------------------------------------------
- -- document.addEventListener('DOMContentLoaded', () => {
- --            const tasks = document.querySelectorAll('.task');
- --            const taskLists = document.querySelectorAll('.task-list');
- --            const successMessage = document.getElementById('successMessage');
-            
- --            let draggedItem = null;
-
- --            // Add event listeners to all tasks
- --            tasks.forEach(task => {
- --                task.addEventListener('dragstart', handleDragStart);
- --                task.addEventListener('dragend', handleDragEnd);
- --            });
-
- --            // Add event listeners to all task lists
- --            taskLists.forEach(list => {
- --                list.addEventListener('dragover', handleDragOver);
- --                list.addEventListener('dragenter', handleDragEnter);
- --                list.addEventListener('dragleave', handleDragLeave);
- --                list.addEventListener('drop', handleDrop);
- --            });
-
- --            function handleDragStart(e) {
- --                draggedItem = this;
- --                setTimeout(() => {
- --                    this.classList.add('dragging');
- --                }, 0);
- --            }
-
- --            function handleDragEnd() {
- --                this.classList.remove('dragging');
- --                draggedItem = null;
-                
- --                // Show success message
- --                successMessage.classList.add('show');
- --                setTimeout(() => {
- --                    successMessage.classList.remove('show');
- --                }, 2000);
- --            }
-
- --            function handleDragOver(e) {
- --                e.preventDefault();
- --            }
-
- --            function handleDragEnter(e) {
- --                e.preventDefault();
- --                this.classList.add('drag-over');
- --            }
-
- --            function handleDragLeave() {
- --                this.classList.remove('drag-over');
- --            }
-
- --            function handleDrop(e) {
- --                e.preventDefault();
- --                this.classList.remove('drag-over');
-                
- --                // Only move the item if it's being dropped in a different container
- --                if (this !== draggedItem.parentNode) {
- --                    this.appendChild(draggedItem);
- --                }
- --            }
- --        });
