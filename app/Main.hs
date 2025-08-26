@@ -59,7 +59,7 @@ currentSection :: Lens Model (Maybe Section)
 currentSection = lens _currentSection $ \record x -> record { _currentSection = x }
 -----------------------------------------------------------------------------
 initialModel :: Model
-initialModel = flip Model Nothing Nothing $ M.fromList
+initialModel = Model Nothing Nothing $ M.fromList
   [ Todo =:
      [ Task "1" "Design Homepage" "Create wire frames"
      , Task "2" "Write blogpost" "Draft article"
