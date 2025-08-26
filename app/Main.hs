@@ -170,16 +170,16 @@ showSection (maybeSection, maybeTask) (section, tasks) =
   ]
 -----------------------------------------------------------------------------
 onDrop :: action -> Attribute action
-onDrop = flip onDropWithOptions preventDefault
+onDrop = onDropWithOptions preventDefault
 -----------------------------------------------------------------------------
 onDragOver :: action -> Attribute action
-onDragOver = flip onDragOverWithOptions preventDefault
+onDragOver = onDragOverWithOptions preventDefault
 -----------------------------------------------------------------------------
 onDragEnter :: action -> Attribute action
-onDragEnter = flip onDragEnterWithOptions preventDefault
+onDragEnter = onDragEnterWithOptions preventDefault
 -----------------------------------------------------------------------------
 onDragLeave :: action -> Attribute action
-onDragLeave = flip onDragLeaveWithOptions preventDefault
+onDragLeave = onDragLeaveWithOptions preventDefault
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel model =
