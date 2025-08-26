@@ -23,9 +23,9 @@ data Action
   = DragStart Section Task
   | DragEnd Section Task
   | DragOver
-  | DragEnter
+  | DragEnter Section
   | DragLeave
-  | Drop
+  | Drop Section
   deriving (Show, Eq)
 -----------------------------------------------------------------------------
 #ifdef WASM
@@ -44,15 +44,22 @@ data Task
 -----------------------------------------------------------------------------
 data Model
   = Model
-  { sections :: Map Section [Task]
-  , _currentTask :: Maybe (Section, Task)
+  { _currentTask :: Maybe Task
+  , _currentSection :: Maybe Section
+  , _sections :: Map Section [Task]
   } deriving (Eq, Show)
 -----------------------------------------------------------------------------
-currentTask :: Lens Model (Maybe (Section, Task))
+currentTask :: Lens Model (Maybe Task)
 currentTask = lens _currentTask $ \record x -> record { _currentTask = x }
 -----------------------------------------------------------------------------
+sections :: Lens Model (Map Section [Task])
+sections = lens _sections $ \record x -> record { _sections = x }
+-----------------------------------------------------------------------------
+currentSection :: Lens Model (Maybe Section)
+currentSection = lens _currentSection $ \record x -> record { _currentSection = x }
+-----------------------------------------------------------------------------
 initialModel :: Model
-initialModel = flip Model Nothing $ M.fromList
+initialModel = flip Model Nothing Nothing $ M.fromList
   [ Todo =:
      [ Task "1" "Design Homepage" "Create wire frames"
      , Task "2" "Write blogpost" "Draft article"
@@ -75,13 +82,44 @@ app = (component initialModel update_ viewModel)
   } where
       update_ = \case
         DragStart section task -> do
-          currentTask ?= (section, task)
-        DragEnd _ _ ->
+          currentTask ?= task
+          currentSection ?= section
+          io_ (consoleLog "drag start")
+        DragEnd _ _ -> do
           currentTask .= Nothing
-        DragOver -> pure ()
-        DragEnter -> pure ()
-        DragLeave -> pure ()
-        Drop -> pure ()
+          currentSection .= Nothing
+          io_ (consoleLog "drag end")
+        DragOver -> do
+          io_ (consoleLog "drag over")
+        DragEnter section -> do
+          currentSection ?= section
+          io_ (consoleLog "drag enter")
+        DragLeave -> do
+          currentSection .= Nothing
+          io_ (consoleLog "drag leave")
+        Drop droppedSection -> do
+          io_ (consoleLog "in drop!")
+          use currentSection >>= \case
+            Just section
+              | section /= droppedSection -> do
+                  io_ (consoleLog "in section!")
+                  use currentTask >>= \case
+                    Nothing -> do
+                      io_ (consoleLog "no current task!")
+                      pure ()
+                    Just task -> do
+                      io_ (consoleLog "found current task, swapping!")
+                      sections %= swap task section droppedSection 
+            _ ->
+              pure ()
+              
+          currentSection .= Nothing
+          io_ (consoleLog "drop")
+-----------------------------------------------------------------------------
+swap :: Task -> Section -> Section -> Map Section [Task] -> Map Section [Task] 
+swap droppedTask oldSection newSection sections_ = do
+  case M.filterWithKey (\s ts -> notElem (taskId droppedTask) (taskId <$> ts) && oldSection == s) sections_ of
+    new -> M.insertWith (++) newSection [droppedTask] new
 -----------------------------------------------------------------------------
 data Section
   = Todo
@@ -96,25 +134,31 @@ instance ToMisoString Section where
   toMisoString Review      = "Review"
   toMisoString Done        = "Done"
 -----------------------------------------------------------------------------
-showSection :: Maybe (Section, Task) -> (Section, [Task]) -> View Model Action
-showSection maybeTask (section, tasks) =
+showSection :: (Maybe Section, Maybe Task) -> (Section, [Task]) -> View Model Action
+showSection (maybeSection, maybeTask) (section, tasks) =
   H.div_
   [ P.class_ "column" ]
-  [ H.h2_ [P.class_ "column-title"] [ text (ms section) ]
+  [ H.h2_
+    [ P.class_ "column-title" ]
+    [ text (ms section)
+    ]
   , H.div_
     [ P.id_ "todo"
-    , P.class_ "task-list"
-    , E.onDragOver DragOver
-    , E.onDragEnter DragEnter
-    , E.onDragLeave DragLeave
-    , E.onDrop (AllowDrop True) Drop
+    , P.classList_
+      [ "task-list" =: True
+      , "drag-enter" =: (Just section == maybeSection)
+      ] 
+    , Main.onDragOver DragOver
+    , Main.onDragEnter (DragEnter section)
+    , Main.onDragLeave DragLeave
+    , Main.onDrop (Drop section)
     ]
     [ H.div_
         [ P.data_ "id" taskId
         , draggable_ True
         , P.classList_
           [ "task" =: True
-          , "dragging" =: (Just (section, task) == maybeTask)
+          , "dragging" =: (Just task == maybeTask)
           ]
         , E.onDragStart (DragStart section task)
         , E.onDragEnd (DragEnd section task)
@@ -129,7 +173,27 @@ showSection maybeTask (section, tasks) =
     | task@Task {..} <- tasks
     ]
   ]
----
+-----------------------------------------------------------------------------
+onDrop :: action -> Attribute action
+onDrop action = flip onWithOptions "drop" defaultOptions {
+    preventDefault = True
+  } emptyDecoder (\_ _ -> action)
+-----------------------------------------------------------------------------
+onDragOver :: action -> Attribute action
+onDragOver action = flip onWithOptions "dragover" defaultOptions {
+    preventDefault = True
+  } emptyDecoder (\_ _ -> action)
+-----------------------------------------------------------------------------
+onDragEnter :: action -> Attribute action
+onDragEnter action = flip onWithOptions "dragenter" defaultOptions {
+    preventDefault = True
+  } emptyDecoder (\_ _ -> action)
+-----------------------------------------------------------------------------
+onDragLeave :: action -> Attribute action
+onDragLeave action = flip onWithOptions "dragleave" defaultOptions {
+    preventDefault = True
+  } emptyDecoder (\_ _ -> action)
+-----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel model =
   H.div_
@@ -142,13 +206,15 @@ viewModel model =
             [ "Drag tasks between columns to organize your workflow"
             ]
         ]
-    , H.div_ [ P.class_ "container" ]
-        (showSection (model ^. currentTask) <$> M.toList (sections model))
+    , H.div_
+      [ P.class_ "container"
+      ] (showSection (model ^. currentSection, model ^. currentTask) <$> M.toList (model ^. sections))
     , H.div_
         [ P.id_ "successMessage"
         , P.class_ "success-message"
         ]
-        ["Task moved successfully!"]
+        [ "Task moved successfully!"
+        ]
     ]
 -----------------------------------------------------------------------------
 draggable_ :: Bool -> Attribute action
