@@ -104,8 +104,8 @@ app = (component initialModel update_ viewModel)
           pure ()
 -----------------------------------------------------------------------------
 swap :: Maybe Task -> Maybe Section -> Section -> Map Section [Task] -> Map Section [Task]
-swap _ Nothing _ sections_ = sections 
-swap Nothing _ _ sections_ = sections 
+swap _ Nothing _ sections_ = sections_ 
+swap Nothing _ _ sections_ = sections_
 swap (Just droppedTask) (Just oldSection) newSection sections_ =
   case M.insertWith (++) newSection [droppedTask] sections_ of
     newMap ->
