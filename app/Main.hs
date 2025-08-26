@@ -219,13 +219,13 @@ viewModel model =
     ]
 -----------------------------------------------------------------------------
 githubStar :: View model action
-githubStar = iframe_
-    [ title_ "GitHub"
-    , height_ "30"
-    , width_ "170"
+githubStar = H.iframe_
+    [ P.title_ "GitHub"
+    , P.height_ "30"
+    , P.width_ "170"
     , textProp "scrolling" "0"
     , textProp "frameborder" "0"
-    , src_
+    , P.src_
       "https://ghbtns.com/github-btn.html?user=haskell-miso&repo=miso-drag-and-drop&type=star&count=true&size=large"
     ]
     []
