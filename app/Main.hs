@@ -22,10 +22,10 @@ import           Data.Map.Strict (Map)
 data Action
   = DragStart Section Task
   | DragEnd Section Task
+  | Drop Section
   | DragOver
   | DragEnter
   | DragLeave
-  | Drop Section
   deriving (Show, Eq)
 -----------------------------------------------------------------------------
 #ifdef WASM
@@ -155,7 +155,7 @@ showSection (maybeSection, maybeTask) (section, tasks) =
     ]
     [ H.div_
         [ P.data_ "id" taskId
-        , draggable_ True
+        , P.draggable_ True
         , P.classList_
           [ "task" =: True
           , "dragging" =: (Just task == maybeTask)
@@ -229,7 +229,4 @@ githubStar = iframe_
       "https://ghbtns.com/github-btn.html?user=haskell-miso&repo=miso-drag-and-drop&type=star&count=true&size=large"
     ]
     []
------------------------------------------------------------------------------
-draggable_ :: Bool -> Attribute action
-draggable_ = boolProp "draggable"
 -----------------------------------------------------------------------------
