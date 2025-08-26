@@ -78,7 +78,9 @@ initialModel = flip Model Nothing Nothing $ M.fromList
 app :: App Model Action
 app = (component initialModel update_ viewModel)
   { events = dragEvents
+#ifndef WASM
   , styles = [ Href "assets/style.css" ]
+#endif
   } where
       update_ = \case
         DragStart section task -> do
