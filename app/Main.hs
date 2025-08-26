@@ -7,7 +7,9 @@
 -----------------------------------------------------------------------------
 module Main where
 -----------------------------------------------------------------------------
-import           Prelude hiding (unlines, rem)
+import           Control.Monad (when)
+import qualified Data.Map.Strict as M
+import           Data.Map.Strict (Map)
 -----------------------------------------------------------------------------
 import           Miso
 import           Miso.Html.Element as H
@@ -15,9 +17,6 @@ import           Miso.Html.Event as E
 import           Miso.Html.Property as P
 import           Miso.String
 import           Miso.Lens
------------------------------------------------------------------------------
-import qualified Data.Map.Strict as M
-import           Data.Map.Strict (Map)
 -----------------------------------------------------------------------------
 data Action
   = DragStart Section Task
