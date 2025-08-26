@@ -198,10 +198,10 @@ viewModel :: Model -> View Model Action
 viewModel model =
   H.div_
     []
-    [ H.header_
+    [ githubStar
+    , H.header_ 
         []
         [ H.h1_ [] ["Miso drag & drop 🍜 " ]
-        , githubStar
         , H.p_
             []
             [ "Drag tasks between columns to organize your workflow"
