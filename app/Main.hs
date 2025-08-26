@@ -1,6 +1,7 @@
 -----------------------------------------------------------------------------
 {-# LANGUAGE CPP               #-}
 {-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TypeApplications  #-}
 {-# LANGUAGE OverloadedStrings #-}
 -----------------------------------------------------------------------------
@@ -9,24 +10,18 @@ module Main where
 import           Prelude hiding (unlines, rem)
 -----------------------------------------------------------------------------
 import           Miso
-import           Miso.Lens
 import           Miso.Html.Element as H
 import           Miso.Html.Event as E
 import           Miso.Html.Property as P
 import           Miso.String
+import           Miso.Lens
 -----------------------------------------------------------------------------
-newtype Model = Model { _value :: Int }
-  deriving (Show, Eq)
------------------------------------------------------------------------------
-instance ToMisoString Model where
-  toMisoString (Model v) = toMisoString v
------------------------------------------------------------------------------
-value :: Lens Model Int
-value = lens _value $ \m v -> m { _value = v }
+import qualified Data.Map.Strict as M
+import           Data.Map.Strict (Map)
 -----------------------------------------------------------------------------
 data Action
-  = DragStart
-  | DragEnd
+  = DragStart Section Task
+  | DragEnd Section Task
   | DragOver
   | DragEnter
   | DragLeave
@@ -40,21 +35,103 @@ foreign export javascript "hs_start" main :: IO ()
 main :: IO ()
 main = run (startApp app)
 -----------------------------------------------------------------------------
+data Task
+  = Task
+  { taskId :: MisoString
+  , taskTitle :: MisoString
+  , taskDescription :: MisoString
+  } deriving (Show, Eq)
+-----------------------------------------------------------------------------
+data Model
+  = Model
+  { sections :: Map Section [Task]
+  , _currentTask :: Maybe (Section, Task)
+  } deriving (Eq, Show)
+-----------------------------------------------------------------------------
+currentTask :: Lens Model (Maybe (Section, Task))
+currentTask = lens _currentTask $ \record x -> record { _currentTask = x }
+-----------------------------------------------------------------------------
+initialModel :: Model
+initialModel = flip Model Nothing $ M.fromList
+  [ Todo =:
+     [ Task "1" "Design Homepage" "Create wire frames"
+     , Task "2" "Write blogpost" "Draft article"
+     ]
+  , InProgress =:
+     [ Task "3" "Implement API" "Connect user to backend authentication"
+     ]
+  , Review =:
+     [ Task "4" "Fix mobile layout" "Address responsiveness issues"
+     ]
+  , Done =:
+     [ Task "5" "User testing" "Complete first round of user testing"
+     ]
+  ]
+-----------------------------------------------------------------------------
 app :: App Model Action
-app = (component (Model 0) update_ viewModel)
+app = (component initialModel update_ viewModel)
   { events = dragEvents
   , styles = [ Href "assets/style.css" ]
   } where
       update_ = \case
-        DragStart -> pure ()
-        DragEnd -> pure ()
+        DragStart section task -> do
+          currentTask ?= (section, task)
+        DragEnd _ _ ->
+          currentTask .= Nothing
         DragOver -> pure ()
         DragEnter -> pure ()
         DragLeave -> pure ()
         Drop -> pure ()
 -----------------------------------------------------------------------------
+data Section
+  = Todo
+  | InProgress
+  | Review
+  | Done
+  deriving (Ord, Show, Eq)
+-----------------------------------------------------------------------------
+instance ToMisoString Section where
+  toMisoString Todo        = "To Do"
+  toMisoString InProgress  = "In Progress"
+  toMisoString Review      = "Review"
+  toMisoString Done        = "Done"
+-----------------------------------------------------------------------------
+showSection :: Maybe (Section, Task) -> (Section, [Task]) -> View Model Action
+showSection maybeTask (section, tasks) =
+  H.div_
+  [ P.class_ "column" ]
+  [ H.h2_ [P.class_ "column-title"] [ text (ms section) ]
+  , H.div_
+    [ P.id_ "todo"
+    , P.class_ "task-list"
+    , E.onDragOver DragOver
+    , E.onDragEnter DragEnter
+    , E.onDragLeave DragLeave
+    , E.onDrop (AllowDrop True) Drop
+    ]
+    [ H.div_
+        [ P.data_ "id" taskId
+        , draggable_ True
+        , P.classList_
+          [ "task" =: True
+          , "dragging" =: (Just (section, task) == maybeTask)
+          ]
+        , E.onDragStart (DragStart section task)
+        , E.onDragEnd (DragEnd section task)
+        ]
+        [ H.div_ [P.class_ "task-title"] [ text taskTitle ]
+        , H.div_
+            [ P.class_ "task-desc"
+            ]
+            [ text taskDescription
+            ]
+        ]
+    | task@Task {..} <- tasks
+    ]
+  ]
+---
 viewModel :: Model -> View Model Action
-viewModel _ =
+viewModel model =
   H.div_
     []
     [ H.header_
@@ -65,107 +142,8 @@ viewModel _ =
             [ "Drag tasks between columns to organize your workflow"
             ]
         ]
-    , H.div_
-        [ P.class_ "container" ]
-        [ H.div_
-            [P.class_ "column"]
-            [ H.h2_ [P.class_ "column-title"] ["To Do"]
-            , H.div_
-                [ P.id_ "todo"
-                , P.class_ "task-list"
-                , E.onDragOver DragOver
-                , E.onDragEnter DragEnter
-                , E.onDragLeave DragLeave
-                , E.onDrop (AllowDrop True) Drop
-                ]
-                [ H.div_
-                    [ P.data_ "id" "1"
-                    , draggable_ True
-                    , P.class_ "task"
-                    , E.onDragStart DragStart
-                    , E.onDragEnd DragEnd
-                    ]
-                    [ H.div_ [P.class_ "task-title"] ["Design Homepage"]
-                    , H.div_
-                        [P.class_ "task-desc"]
-                        ["Create wireframes for the new homepage design"]
-                    ]
-                , H.div_
-                    [ P.data_ "id" "2"
-                    , draggable_ True
-                    , P.class_ "task"
-                    ]
-                    [ H.div_ [P.class_ "task-title"] ["Write Blog Post"]
-                    , H.div_
-                        [P.class_ "task-desc"]
-                        ["Draft article about modern CSS techniques"]
-                    ]
-                ]
-            ]
-        , H.div_
-            [P.class_ "column"]
-            [ H.h2_ [P.class_ "column-title"] ["In Progress"]
-            , H.div_
-                [ P.id_ "progress"
-                , P.class_ "task-list"
-                , E.onDragOver DragOver
-                , E.onDragEnter DragEnter
-                , E.onDragLeave DragLeave
-                , E.onDrop (AllowDrop True) Drop
-                ]
-                [ H.div_
-                    [ P.data_ "id" "3"
-                    , draggable_ True
-                    , P.class_ "task"
-                    ]
-                    [ H.div_ [P.class_ "task-title"] ["Implement API"]
-                    , H.div_
-                        [P.class_ "task-desc"]
-                        ["Connect user authentication to backend"]
-                    ]
-                ]
-            ]
-        , H.div_
-            [P.class_ "column"]
-            [ H.h2_ [P.class_ "column-title"] ["Review"]
-            , H.div_
-                [P.id_ "review", P.class_ "task-list"]
-                [ H.div_
-                    [ P.data_ "id" "4"
-                    , draggable_ True
-                    , P.class_ "task"
-                    ]
-                    [ H.div_ [P.class_ "task-title"] ["Fix Mobile Layout"]
-                    , H.div_
-                        [P.class_ "task-desc"]
-                        ["Address responsive issues on mobile devices"]
-                    ]
-                ]
-            ]
-        , H.div_
-            [P.class_ "column"]
-            [ H.h2_ [P.class_ "column-title"] ["Done"]
-            , H.div_
-                [ P.id_ "done"
-                , P.class_ "task-list"
-                , E.onDragOver DragOver
-                , E.onDragEnter DragEnter
-                , E.onDragLeave DragLeave
-                , E.onDrop (AllowDrop True) Drop
-                ]
-                [ H.div_
-                    [ P.data_ "id" "5"
-                    , draggable_ True
-                    , P.class_ "task"
-                    ]
-                    [ H.div_ [P.class_ "task-title"] ["User Testing"]
-                    , H.div_
-                        [P.class_ "task-desc"]
-                        ["Complete first round of user testing"]
-                    ]
-                ]
-            ]
-        ]
+    , H.div_ [ P.class_ "container" ]
+        (showSection (model ^. currentTask) <$> M.toList (sections model))
     , H.div_
         [ P.id_ "successMessage"
         , P.class_ "success-message"
