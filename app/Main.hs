@@ -201,6 +201,7 @@ viewModel model =
     [ H.header_
         []
         [ H.h1_ [] ["Miso drag & drop 🍜 " ]
+        , githubStar
         , H.p_
             []
             [ "Drag tasks between columns to organize your workflow"
@@ -216,6 +217,18 @@ viewModel model =
         [ "Task moved successfully!"
         ]
     ]
+-----------------------------------------------------------------------------
+githubStar :: View model action
+githubStar = iframe_
+    [ title_ "GitHub"
+    , height_ "30"
+    , width_ "170"
+    , textProp "scrolling" "0"
+    , textProp "frameborder" "0"
+    , src_
+      "https://ghbtns.com/github-btn.html?user=haskell-miso&repo=miso-drag-and-drop&type=star&count=true&size=large"
+    ]
+    []
 -----------------------------------------------------------------------------
 draggable_ :: Bool -> Attribute action
 draggable_ = boolProp "draggable"
