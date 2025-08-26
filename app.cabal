@@ -1,0 +1,47 @@
+cabal-version:      3.0
+name:               app
+version:            0.1.0.0
+synopsis:           A drag-and-drop example miso application
+description:        A drag-and-drop API example in miso
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             dmjio
+maintainer:         code@dmj.io
+copyright:          haskell-miso @ 2025
+category:           Web
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+
+common opts
+  ghc-options:
+    -funbox-strict-fields
+    -O2
+    -ferror-spans
+    -fspecialise-aggressively
+
+common warnings
+  ghc-options:
+    -Wall
+
+common wasm
+  if arch(wasm32)
+    ghc-options:
+      -no-hs-main
+      -optl-mexec-model=reactor
+      "-optl-Wl,--export=hs_start"
+    cpp-options:
+      -DWASM
+
+executable app
+  import:
+    wasm, opts, warnings
+  main-is:
+    Main.hs
+  build-depends:
+    base < 5,
+    containers >= 0.7,
+    miso
+  hs-source-dirs:
+    app
+  default-language:
+    Haskell2010
