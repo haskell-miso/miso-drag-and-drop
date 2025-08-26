@@ -92,7 +92,8 @@ app = (component initialModel update_ viewModel)
         Drop dropped -> do
           section <- use currentSection
           when (section /= Just dropped) $ do
-            sections %?= swap task section dropped 
+            task <- use currentTask
+            sections %= swap task section dropped 
           currentSection .= Nothing
           currentTask .= Nothing
         DragOver ->
@@ -102,9 +103,10 @@ app = (component initialModel update_ viewModel)
         DragLeave ->
           pure ()
 -----------------------------------------------------------------------------
-swap :: Task -> Maybe Section -> Section -> Map Section [Task] -> Map Section [Task]
+swap :: Maybe Task -> Maybe Section -> Section -> Map Section [Task] -> Map Section [Task]
 swap _ Nothing _ sections_ = sections 
-swap droppedTask (Just oldSection) newSection sections_ =
+swap Nothing _ _ sections_ = sections 
+swap (Just droppedTask) (Just oldSection) newSection sections_ =
   case M.insertWith (++) newSection [droppedTask] sections_ of
     newMap ->
       case M.lookup oldSection newMap of
