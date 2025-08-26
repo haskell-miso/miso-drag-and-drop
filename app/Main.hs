@@ -170,16 +170,16 @@ showSection (maybeSection, maybeTask) (section, tasks) =
   ]
 -----------------------------------------------------------------------------
 onDrop :: action -> Attribute action
-onDrop action = onWithOptions preventDefault "drop" emptyDecoder (\_ _ -> action)
+onDrop = flip onDropWithOptions preventDefault
 -----------------------------------------------------------------------------
 onDragOver :: action -> Attribute action
-onDragOver action = onWithOptions preventDefault "dragover" emptyDecoder (\_ _ -> action)
+onDragOver = flip onDragOverWithOptions preventDefault
 -----------------------------------------------------------------------------
 onDragEnter :: action -> Attribute action
-onDragEnter action = onWithOptions preventDefault "dragenter" emptyDecoder (\_ _ -> action)
+onDragEnter = flip onDragEnterWithOptions preventDefault
 -----------------------------------------------------------------------------
 onDragLeave :: action -> Attribute action
-onDragLeave action = onWithOptions preventDefault "dragleave" emptyDecoder (\_ _ -> action)
+onDragLeave = flip onDragLeaveWithOptions preventDefault
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel model =
