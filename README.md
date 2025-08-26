@@ -1,9 +1,10 @@
 :ramen: 📁 miso-drag-and-drop
 ====================
 
-An example of using the Drag and Drop API in [miso](https://github.com/dmjio/miso)
+An example of using the Drag and Drop API in [miso](https://github.com/dmjio/miso). See live [here](https://drag-and-drop.haskell-miso.org)
 
-See live [here](https://drag-and-drop.haskell-miso.org)
+<img width="927" height="389" alt="image" src="https://github.com/user-attachments/assets/a20e4ea8-d4d9-4cb4-993b-993e2e48fc92" />
+
 
 ### Development
 
