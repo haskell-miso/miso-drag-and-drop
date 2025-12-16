@@ -17,6 +17,7 @@ import           Miso.Html.Event as E
 import           Miso.Html.Property as P
 import           Miso.String
 import           Miso.Lens
+import qualified Miso.CSS as CSS
 -----------------------------------------------------------------------------
 data Action
   = DragStart Section Task
@@ -188,7 +189,7 @@ viewModel model =
     [ githubStar
     , H.header_ 
         []
-        [ H.h1_ [] ["Miso drag & drop 🍜 " ]
+        [ H.h1_ [ CSS.style_ ["font-family" =: "monospace"] ] ["🍜 miso drag & drop"]
         , H.p_
             []
             [ "Drag tasks between columns to organize your workflow"
