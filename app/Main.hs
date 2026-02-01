@@ -33,7 +33,7 @@ foreign export javascript "hs_start" main :: IO ()
 #endif
 -----------------------------------------------------------------------------
 main :: IO ()
-main = run (startApp app)
+main = startApp dragEvents app
 -----------------------------------------------------------------------------
 data Task
   = Task
@@ -77,11 +77,11 @@ initialModel = Model Nothing Nothing $ M.fromList
 -----------------------------------------------------------------------------
 app :: App Model Action
 app = (component initialModel update_ viewModel)
-  { events = dragEvents
 #ifndef WASM
-  , styles = [ Href "assets/style.css" ]
+  { styles = [ Href "assets/style.css" ]
+  }
 #endif
-  } where
+    where
       update_ = \case
         DragStart section task -> do
           currentTask ?= task
