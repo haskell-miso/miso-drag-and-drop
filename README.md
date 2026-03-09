@@ -7,6 +7,15 @@
 
 An example of using the Drag and Drop API in [miso](https://github.com/dmjio/miso). See live [here](https://drag-and-drop.haskell-miso.org)
 
+### Touch events
+
+By default the [HTML5 drag and drop](https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API) API does not support touch events. 
+Luckily there are [polyfills](https://www.npmjs.com/package/drag-drop-touch) to help with this.
+
+This example uses the [drag-drop-touch](https://www.npmjs.com/package/drag-drop-touch) package to allow touch events to work seamlessly with `drag` API related events.
+
+Credit to [@Reijix](https://github.com/Reijix) for this find.
+
 ### Development
 
 Call `nix develop` to enter a shell with [GHC 9.12.2](https://haskell.org/ghc)
