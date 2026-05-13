@@ -184,8 +184,7 @@ onDragLeave = onDragLeaveWithOptions preventDefault
 -----------------------------------------------------------------------------
 viewModel :: Model -> View Model Action
 viewModel model =
-  H.div_
-    []
+  vfrag
     [ githubStar
     , H.header_ 
         []
