@@ -130,7 +130,7 @@ instance ToMisoString Section where
   toMisoString Review      = "Review"
   toMisoString Done        = "Done"
 -----------------------------------------------------------------------------
-showSection :: (Maybe Section, Maybe Task) -> (Section, [Task]) -> View Model Action
+showSection :: (Maybe Section, Maybe Task) -> (Section, [Task]) -> View context Model Action
 showSection (maybeSection, maybeTask) (section, tasks) =
   H.div_
   [ P.class_ "column" ]
@@ -170,20 +170,20 @@ showSection (maybeSection, maybeTask) (section, tasks) =
     ]
   ]
 -----------------------------------------------------------------------------
-onDrop :: action -> Attribute action
+onDrop :: action -> Attribute model action
 onDrop = onDropWithOptions preventDefault
 -----------------------------------------------------------------------------
-onDragOver :: action -> Attribute action
+onDragOver :: action -> Attribute model action
 onDragOver = onDragOverWithOptions preventDefault
 -----------------------------------------------------------------------------
-onDragEnter :: action -> Attribute action
+onDragEnter :: action -> Attribute model action
 onDragEnter = onDragEnterWithOptions preventDefault
 -----------------------------------------------------------------------------
-onDragLeave :: action -> Attribute action
+onDragLeave :: action -> Attribute model action
 onDragLeave = onDragLeaveWithOptions preventDefault
 -----------------------------------------------------------------------------
-viewModel :: Model -> View Model Action
-viewModel model =
+viewModel :: context -> props -> Model -> View context Model Action
+viewModel _ _ model =
   vfrag
     [ githubStar
     , H.header_ 
@@ -205,7 +205,7 @@ viewModel model =
         ]
     ]
 -----------------------------------------------------------------------------
-githubStar :: View model action
+githubStar :: View context model action
 githubStar = H.iframe_
     [ P.title_ "GitHub"
     , P.height_ "30"
